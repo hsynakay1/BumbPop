@@ -1,17 +1,40 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum GameState
+{
+    Aim,
+    Action,
+    UI
+}
 public class GameManager : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public static GameManager Instance;
+    public GameState gameState;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    private void Start()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void AimState()
     {
         
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ActionStade()
+    {
+        
+    }
+
+    public void UIStade()
     {
         
     }
