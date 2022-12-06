@@ -2,8 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO.Compression;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UIElements;
 
 public class BallController : MonoBehaviour
 {
@@ -12,15 +15,16 @@ public class BallController : MonoBehaviour
     public List<Ball> activeBalls = new List<Ball>();
     public Ball selectingBall;
 
-    [SerializeField] private float _power;
-    [SerializeField] private float _maxDrag;
-    [SerializeField] private float _lineRendererLenght;
+    public Transform directionVector;
     
-    private Touch _touch;  
+    private Vector3 _direction;
+    private float _power;
     
-    private Vector3 _draggingPos;
-    private Vector3 _dragVector;
-    private Vector3 _dragStartPos;
+    private Touch _touch;
+
+    private Vector3 _dragStart;
+    private Vector3 _dragEnd;
+    private Vector3 _dragging;
 
     public LineRenderer lineRenderer;
 
@@ -31,52 +35,46 @@ public class BallController : MonoBehaviour
 
     private void Update()
     {
-        if (Input.touchCount > 0 )
+        Distance();
+        selectingBall = Distance();
+
+        directionVector.transform.position = selectingBall.transform.position;
+        
+        if (Input.GetMouseButtonDown(0))
         {
-            _touch = Input.GetTouch(0);
-
-            if (_touch.phase == TouchPhase.Began)
-            {
-                DragStart();
-            }
-
-            if (_touch.phase == TouchPhase.Moved)
-            {
-                Dragging();
-            }
-
-            if (_touch.phase == TouchPhase.Ended)
-            {
-                DragRelease();
-            }
+            _dragStart = Input.mousePosition;
         }
-    }
 
-    private void DragStart()
-    {
-        _draggingPos = _touch.position;
-        lineRenderer.positionCount = 1;
-        lineRenderer.SetPosition(0,selectingBall.transform.position);
+        if (Input.GetMouseButton(0))
+        {
+            _dragging = Input.mousePosition - _dragStart;
+            directionVector.rotation = Quaternion.Euler(directionVector.rotation.x, _dragging.x,directionVector.rotation.z);
+            Debug.LogWarning(_dragging + "dragging");
+        }
         
-    }
+        if (Input.GetMouseButtonUp(0))
+        {
+            selectingBall.transform.forward = directionVector.forward;
+            _dragEnd = Input.mousePosition;
+            _power = (_dragEnd - _dragStart).sqrMagnitude;
+            selectingBall.GetComponent<Rigidbody>().AddForce(selectingBall.transform.forward * 1000, ForceMode.Impulse);
 
-    private void Dragging()
-    {
-        _draggingPos = _touch.position;
-        _dragVector = _draggingPos - _dragStartPos;
-        lineRenderer.positionCount = 2;
-        lineRenderer.SetPosition(1, - Vector3.ClampMagnitude(_dragVector,_power) * (0.1f * _lineRendererLenght));
-    }
 
-    private void DragRelease()
-    {
-        lineRenderer.positionCount = 0;
+
+        }
+        }
+
+
+
+
         
-        Vector3 dragReleasePos = _touch.position;
-        Vector3 force = _dragStartPos - dragReleasePos;
-        Vector3 clampedForce = Vector3.ClampMagnitude(force, _power);
 
-        selectingBall.rigidbody.AddRelativeForce(clampedForce, ForceMode.Impulse);
+    }
+
+    private Ball Distance()
+    {
+         var temp = activeBalls.OrderBy(t => t.distance).ToList();
+         return temp[0];
     }
     
 }
