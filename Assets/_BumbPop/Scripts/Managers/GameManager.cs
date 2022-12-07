@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        throw new NotImplementedException();
+        gameState = GameState.Aim;
     }
 
     public void AimState()
